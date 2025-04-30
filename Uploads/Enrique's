@@ -1,0 +1,54 @@
+# ---------------------------- NEW IMPORTS ---------------------------- #
+import plotly.graph_objects as go  # For extra styling (used optionally)
+
+# ---------------------------- NEW DATA CALCULATIONS ---------------------------- #
+# Pre-calculate data for additional graphs
+latest_rates = df.iloc[-1].drop('Week_start')
+first_rates = df.iloc[0].drop('Week_start')
+percentage_change = ((latest_rates - first_rates) / first_rates) * 100
+
+volatility = df.drop('Week_start', axis=1).rolling(window=4).std()
+
+# ---------------------------- APP LAYOUT ADDITIONS ---------------------------- #
+# New section (under your existing layout html.Div)
+
+html.Div([  # Two graphs side by side
+    html.Div([
+        dcc.Graph(
+            id='bar-latest',
+            figure=px.bar(
+                x=latest_rates.index,
+                y=latest_rates.values,
+                labels={'x': 'Currency', 'y': 'Rate vs USD'},
+                title='Latest Exchange Rates (vs USD)'
+            )
+        )
+    ], style={'width': '48%', 'display': 'inline-block', 'padding': '0 10'}),
+
+    html.Div([
+        dcc.Graph(
+            id='bar-change',
+            figure=px.bar(
+                x=percentage_change.index,
+                y=percentage_change.values,
+                labels={'x': 'Currency', 'y': '% Change'},
+                title='1-Year % Change vs USD'
+            )
+        )
+    ], style={'width': '48%', 'display': 'inline-block', 'padding': '0 10'})
+], style={'width': '90%', 'margin': 'auto', 'paddingTop': '50px'}),
+
+# Third graph – vertically stacked at the bottom
+html.Div([
+    html.H3("Currency Volatility (Weekly Std Dev)", style={'textAlign': 'center'}),
+    dcc.Graph(
+        id='volatility-line',
+        figure=px.line(
+            volatility,
+            x=volatility.index,
+            y=volatility.columns,
+            labels={'value': 'Volatility', 'variable': 'Currency'},
+            title='Weekly Volatility of Currencies'
+        )
+    )
+], style={'width': '80%', 'margin': 'auto', 'paddingTop': '50px'})
